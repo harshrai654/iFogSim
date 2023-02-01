@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.math3.util.Pair;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.SimEntity;
 import org.cloudbus.cloudsim.core.SimEvent;
@@ -31,7 +32,7 @@ public class Controller extends SimEntity{
 	
 	private Map<String, Application> applications;
 	private Map<String, Integer> appLaunchDelays;
-
+	private static Map<Integer, Pair<Double, Integer>> mobilityMap;
 	private Map<String, ModulePlacement> appModulePlacementPolicy;
 	
 	public Controller(String name, List<FogDevice> fogDevices, List<Sensor> sensors, List<Actuator> actuators) {
@@ -83,6 +84,8 @@ public class Controller extends SimEntity{
 		for(FogDevice dev : getFogDevices())
 			sendNow(dev.getId(), FogEvents.RESOURCE_MGMT);
 
+		scheduleMobility();
+
 	}
 
 	@Override
@@ -96,6 +99,9 @@ public class Controller extends SimEntity{
 			break;
 		case FogEvents.CONTROLLER_RESOURCE_MANAGE:
 			manageResources();
+			break;
+		case FogEvents.FutureMobility:
+			manageMobility(ev);
 			break;
 		case FogEvents.STOP_SIMULATION:
 			CloudSim.stopSimulation();
@@ -284,5 +290,29 @@ public class Controller extends SimEntity{
 
 	public void setAppModulePlacementPolicy(Map<String, ModulePlacement> appModulePlacementPolicy) {
 		this.appModulePlacementPolicy = appModulePlacementPolicy;
+	}
+
+	public void setMobilityMap(Map<Integer, Pair<Double, Integer>> mobilityMap) {
+		this.mobilityMap = mobilityMap;
+	}
+
+	private void scheduleMobility(){
+		for(int id: mobilityMap.keySet()){
+			Pair<Double, Integer> pair = mobilityMap.get(id);
+			double mobilityTime = pair.getFirst();
+			int mobilityDestinationId = pair.getSecond();
+			Pair<Integer, Integer> newConnection = new Pair<Integer,Integer>(id, mobilityDestinationId);
+			send(getId(), mobilityTime, FogEvents.FutureMobility, newConnection);
+		}
+	}
+
+	private void manageMobility(SimEvent ev) {
+		Pair<Integer, Integer>pair = (Pair<Integer, Integer>)ev.getData();
+		int deviceId = pair.getFirst();
+		int newParentId = pair.getSecond();
+		FogDevice deviceWithMobility = getFogDeviceById(deviceId);
+		FogDevice mobilityDest = getFogDeviceById(newParentId);
+		deviceWithMobility.setParentId(newParentId);
+		System.out.println(CloudSim.clock()+" "+deviceWithMobility.getName()+" is now connected to "+mobilityDest.getName());
 	}
 }

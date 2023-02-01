@@ -1,5 +1,6 @@
 package org.fog.test.perfeval;
 
+import org.apache.commons.math3.util.Pair;
 import org.cloudbus.cloudsim.Host;
 import org.cloudbus.cloudsim.Pe;
 import org.cloudbus.cloudsim.Storage;
@@ -12,21 +13,26 @@ import org.fog.application.AppEdge;
 import org.fog.application.AppLoop;
 import org.fog.application.Application;
 import org.fog.application.selectivity.FractionalSelectivity;
-import org.fog.entities.FogDevice;
-import org.fog.entities.FogDeviceCharacteristics;
-import org.fog.entities.Tuple;
+import org.fog.entities.*;
+import org.fog.placement.Controller;
 import org.fog.policy.AppModuleAllocationPolicy;
 import org.fog.scheduler.StreamOperatorScheduler;
 import org.fog.utils.FogLinearPowerModel;
 import org.fog.utils.FogUtils;
+import org.fog.utils.distribution.DeterministicDistribution;
 
 import java.util.*;
+
 
 
 public class MyExample {
     static int numOfFogDevices = 10;
     static List<FogDevice> fogDevices = new ArrayList<FogDevice>();
+    static List<Sensor> sensors = new ArrayList<Sensor>();
+    static List<Actuator> actuators = new ArrayList<Actuator>();
     static Map<String, Integer> getIdByName = new HashMap<String, Integer>();
+    static Map<Integer, Pair<Double, Integer>> mobilityMap = new HashMap<Integer, Pair<Double, Integer>>();
+    static String mobilityDestination = "FogDevice-0";
     private static FogDevice createAFogDevice(String nodeName, long mips,int ram, long upBw, long downBw, int level, double ratePerMips, double busyPower, double idlePower)
     {
         List<Pe> peList = new ArrayList<Pe>();
@@ -125,6 +131,43 @@ public class MyExample {
         return application;
     }
 
+    private static FogDevice addLowLevelFogDevice(String id, int brokerId, String appId, int parentId) {
+        FogDevice lowLevelFogDevice = createAFogDevice("LowLevelFog-Device-" + id, 1000, 1000, 10000, 270, 2, 0, 87.53, 82.44);
+        lowLevelFogDevice.setParentId(parentId);
+        getIdByName.put(lowLevelFogDevice.getName(), lowLevelFogDevice.getId());
+        Sensor sensor = new Sensor("s-"+id, "Sensor", brokerId, appId, new DeterministicDistribution(getValue(5.00)));
+        sensors.add(sensor);
+        Actuator actuator = new Actuator("a-"+id, brokerId, appId, "OutputData");
+        actuators.add(actuator);
+        sensor.setGatewayDeviceId(lowLevelFogDevice.getId());
+        sensor.setLatency(6.0);
+        actuator.setGatewayDeviceId(lowLevelFogDevice.getId());
+        actuator.setLatency(1.0);
+        return lowLevelFogDevice;
+    }
+
+    private static FogDevice addLowLevelFogDeviceWithMobility(String id, int brokerId, String appId, int parentId){
+        FogDevice lowLevelFogDevice = createAFogDevice("LowLevelFog-Device-"+id, 1000, 1000, 10000, 270, 2, 0, 87.53, 82.44);
+        lowLevelFogDevice.setParentId(parentId);
+        getIdByName.put(lowLevelFogDevice.getName(), lowLevelFogDevice.getId());
+        if((int)(Math.random()*100)%2==0){
+            Pair<Double, Integer> pair = new Pair<Double, Integer>(100.00, getIdByName.get(mobilityDestination));
+            mobilityMap.put(lowLevelFogDevice.getId(), pair);
+        }
+        Sensor sensor = new Sensor("s-"+id, "Sensor", brokerId, appId, new DeterministicDistribution(getValue(5.00)));
+        sensors.add(sensor);
+        Actuator actuator = new Actuator("a-"+id, brokerId, appId, "OutputData");
+        actuators.add(actuator);
+        sensor.setGatewayDeviceId(lowLevelFogDevice.getId());
+        sensor.setLatency(6.0);
+        actuator.setGatewayDeviceId(lowLevelFogDevice.getId());
+        actuator.setLatency(1.0);
+        return lowLevelFogDevice;
+    }
+    private static double getValue(double min) {
+        Random rn = new Random();
+        return rn.nextDouble()*10 + min;
+    }
     private static int getValue(int lower, int upper) {
         Random rand = new Random();
         return rand.nextInt(upper- lower) + lower;
@@ -133,7 +176,8 @@ public class MyExample {
     public static void main(String[] args) {
         CloudSim.init(10, Calendar.getInstance(), false);
         createFogDevices();
-        System.out.println(getIdByName);
+        Controller controller = new Controller("master-controller", fogDevices, sensors, actuators);
+        controller.setMobilityMap(mobilityMap);
     }
 
 }

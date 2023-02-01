@@ -13,7 +13,8 @@ import org.fog.utils.*;
 import org.fog.utils.distribution.Distribution;
 
 public class Sensor extends SimEntity{
-	
+	static int numOfMaxTuples = 100;
+	static int tuplesCount = 0;
 	private int gatewayDeviceId;
 	private GeoLocation geoLocation;
 	private long outputSize;
@@ -75,7 +76,7 @@ public class Sensor extends SimEntity{
 		setSensorName(tupleType);
 		setUserId(userId);
 	}
-	
+
 	public void transmit(){
 		AppEdge _edge = null;
 		for(AppEdge edge : getApp().getEdges()){
