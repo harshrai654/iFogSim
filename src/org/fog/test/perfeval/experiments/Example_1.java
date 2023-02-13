@@ -16,8 +16,6 @@ import org.fog.application.selectivity.FractionalSelectivity;
 import org.fog.entities.*;
 import org.fog.placement.Controller;
 import org.fog.placement.ModuleMapping;
-import org.fog.placement.ModulePlacementEdgewards;
-import org.fog.placement.ModulePlacementMapping;
 import org.fog.policy.AppModuleAllocationPolicy;
 import org.fog.scheduler.StreamOperatorScheduler;
 import org.fog.utils.FogLinearPowerModel;
@@ -78,7 +76,7 @@ public class Example_1 {
             Controller controller = new Controller("master-controller", fogDevices, sensors,
                     actuators);
 
-            controller.submitApplication(application, 0, new ModulePlacementEdgewards(fogDevices, sensors, actuators, application, moduleMapping));
+            controller.submitApplication(application, 0, new MyModulePlacement(fogDevices, sensors, actuators, application, moduleMapping));
 
             TimeKeeper.getInstance().setSimulationStartTime(Calendar.getInstance().getTimeInMillis());
 
@@ -216,42 +214,42 @@ public class Example_1 {
         Application application = Application.createApplication(appId, userId);
 
         application.addAppModule("client", 10);
-        application.addAppModule("track_module", 10);
+        application.addAppModule("track-module", 10);
         application.addAppModule("storage", 10);
 
         application.addAppEdge("GPS", "client", 3000, 500, "GPS", Tuple.UP, AppEdge.SENSOR);
 
-        application.addAppEdge("client", "track_module", 3500, 500, "GEO-DATA", Tuple.UP, AppEdge.MODULE);
+        application.addAppEdge("client", "track-module", 3500, 500, "GEO-DATA", Tuple.UP, AppEdge.MODULE);
 
-        application.addAppEdge("track_module", "storage", 100, 1000, 1000, "USER_LOCATION", Tuple.UP, AppEdge.MODULE);
+        application.addAppEdge("track-module", "storage", 100, 1000, 1000, "USER-LOCATION", Tuple.UP, AppEdge.MODULE);
 
-        application.addAppEdge("storage", "track_module", 100, 1500, 2000, "SATELLITE_DATA", Tuple.DOWN, AppEdge.MODULE);
+        application.addAppEdge("storage", "track-module", 100, 1500, 2000, "SATELLITE-DATA", Tuple.DOWN, AppEdge.MODULE);
 
         application.addAppEdge("track-module", "client", 14, 500, "MAP-DATA", Tuple.DOWN, AppEdge.MODULE);
 
-        application.addAppEdge("client", "DISPLAY", 1000, 500, "MAP_GUI", Tuple.DOWN, AppEdge.ACTUATOR);
+        application.addAppEdge("client", "DISPLAY", 1000, 500, "MAP-GUI", Tuple.DOWN, AppEdge.ACTUATOR);
 
-        application.addAppEdge("client", "DISPLAY", 1000, 500, "CURRENT_TRAFFIC", Tuple.DOWN, AppEdge.ACTUATOR);
+        application.addAppEdge("client", "DISPLAY", 1000, 500, "CURRENT-TRAFFIC", Tuple.DOWN, AppEdge.ACTUATOR);
 
 
         application.addTupleMapping("client", "GPS", "GEO-DATA", new FractionalSelectivity(1));
 
         application.addTupleMapping("client", "MAP-DATA", "MAP-GUI", new FractionalSelectivity(0.8));
 
-        application.addTupleMapping("client", "MAP-DATA", "CURRENT_TRAFFIC", new FractionalSelectivity(0.2));
+        application.addTupleMapping("client", "MAP-DATA", "CURRENT-TRAFFIC", new FractionalSelectivity(0.2));
 
-        application.addTupleMapping("track_module", "GEO-DATA", "USER_LOCATION", new FractionalSelectivity(1));
+        application.addTupleMapping("track-module", "GEO-DATA", "USER-LOCATION", new FractionalSelectivity(1));
 
-        application.addTupleMapping("track_module", "GEO-DATA", "USER_LOCATION", new FractionalSelectivity(0.5));
+        application.addTupleMapping("track-module", "GEO-DATA", "USER-LOCATION", new FractionalSelectivity(0.5));
 
-        application.addTupleMapping("track_module", "SATELLITE_DATA", "MAP-DATA", new FractionalSelectivity(0.5));
+        application.addTupleMapping("track-module", "SATELLITE-DATA", "MAP-DATA", new FractionalSelectivity(0.5));
 
-        application.addTupleMapping("storage", "USER_LOCATION", "SATELLITE_DATA", new FractionalSelectivity(0.5));
+        application.addTupleMapping("storage", "USER-LOCATION", "SATELLITE-DATA", new FractionalSelectivity(0.5));
 
         final AppLoop loop1 = new AppLoop(new ArrayList<String>() {{
             add("GPS");
             add("client");
-            add("track_module");
+            add("track-module");
             add("client");
             add("DISPLAY");
         }});
@@ -259,9 +257,9 @@ public class Example_1 {
         final AppLoop loop2 = new AppLoop(new ArrayList<String>() {{
             add("GPS");
             add("client");
-            add("track_module");
+            add("track-module");
             add("storage");
-            add("track_module");
+            add("track-module");
             add("client");
             add("DISPLAY");
         }});
