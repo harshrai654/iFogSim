@@ -81,15 +81,6 @@ public class MyModulePlacement extends ModulePlacement {
          */
         List<List<Integer>> leafToRootPaths = getLeafToRootPaths();
 
-        for (List<Integer> path : leafToRootPaths) {
-            System.out.println("************");
-            for (int deviceId: path) {
-                SimEntity entity = CloudSim.getEntity(deviceId);
-                System.out.print(entity.getName() + " | ");
-            }
-            System.out.println("************");
-        }
-
         /**
          * Now for each path we are going to place some modules
          */
