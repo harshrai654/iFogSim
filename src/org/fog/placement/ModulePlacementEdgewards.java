@@ -135,7 +135,14 @@ public class ModulePlacementEdgewards extends ModulePlacement{
 				appEdgeToRate.put(edge, 1/edge.getPeriodicity());
 			}
 		}
-		
+
+		System.out.println("\nCurrent path: ");
+		for(int id: path) {
+			FogDevice temp = (FogDevice) CloudSim.getEntity(id);
+			System.out.print(temp.getName() + " -> ");
+		}
+		System.out.println("\n*****************");
+
 		for(Integer deviceId : path){
 			FogDevice device = getFogDeviceById(deviceId);
 			Map<String, Integer> sensorsAssociated = getAssociatedSensors(device);
@@ -186,15 +193,24 @@ public class ModulePlacementEdgewards extends ModulePlacement{
 			
 			while(modulesToPlace.size() > 0){ // Loop runs until all modules in modulesToPlace are deployed in the path
 				String moduleName = modulesToPlace.get(0);
+				System.out.println("DEVICE: " + device.getName() + " | " + "MODULE: " + moduleName);
+				System.out.println("Initially Modules to place: " + modulesToPlace);
 				double totalCpuLoad = 0;
 				
 				//IF MODULE IS ALREADY PLACED UPSTREAM, THEN UPDATE THE EXISTING MODULE
 				int upsteamDeviceId = isPlacedUpstream(moduleName, path);
 				if(upsteamDeviceId > 0){
+					FogDevice upStreamDevice = (FogDevice) CloudSim.getEntity(upsteamDeviceId);
+					System.out.println("Module " + moduleName + " is already placed upstream in the path at device: " + upStreamDevice.getName());
 					if(upsteamDeviceId==deviceId){
+						System.out.println("Upstream device is same as current device: " + device.getName());
 						placedModules.add(moduleName);
 						modulesToPlace = getModulesToPlace(placedModules);
-						
+						System.out.println("------------------------------------------");
+						System.out.println("Modules to place: " + modulesToPlace);
+						System.out.println("Placed modules: " + placedModules);
+						System.out.println("------------------------------------------");
+
 						// NOW THE MODULE TO PLACE IS IN THE CURRENT DEVICE. CHECK IF THE NODE CAN SUSTAIN THE MODULE
 						for(AppEdge edge : getApplication().getEdges()){		// take all incoming edges
 							if(edge.getDestination().equals(moduleName)){
@@ -214,9 +230,13 @@ public class ModulePlacementEdgewards extends ModulePlacement{
 							getCurrentCpuLoad().put(deviceId, getCurrentCpuLoad().get(deviceId)+totalCpuLoad);
 							getCurrentModuleInstanceNum().get(deviceId).put(moduleName, getCurrentModuleInstanceNum().get(deviceId).get(moduleName)+1);
 							Logger.debug("ModulePlacementEdgeward", "AppModule "+moduleName+" can be created on device "+device.getName());
+							System.out.println("Upstream device is same as current device and module can be placed in it.");
 						}
+					} else {
+						System.out.println("Upstream device " + upStreamDevice.getName() + "is not the current device "+ device.getName());
 					}
 				}else{
+					System.out.println("No upstream device found in the path with module " + moduleName + ", already deployed");
 					// FINDING OUT WHETHER PLACEMENT OF OPERATOR ON DEVICE IS POSSIBLE
 					for(AppEdge edge : getApplication().getEdges()){		// take all incoming edges
 						if(edge.getDestination().equals(moduleName)){
@@ -227,6 +247,7 @@ public class ModulePlacementEdgewards extends ModulePlacement{
 						
 					if(totalCpuLoad + getCurrentCpuLoad().get(deviceId) > device.getHost().getTotalMips()){
 						Logger.debug("ModulePlacementEdgeward", "Placement of operator "+moduleName+ "NOT POSSIBLE on device "+device.getName());
+						System.out.println("Current device cannot place module: " + moduleName);
 					}
 					else{
 						Logger.debug("ModulePlacementEdgeward", "Placement of operator "+moduleName+ " on device "+device.getName() + " successful.");
@@ -238,6 +259,10 @@ public class ModulePlacementEdgewards extends ModulePlacement{
 						currentModuleMap.get(deviceId).add(moduleName);
 						placedModules.add(moduleName);
 						modulesToPlace = getModulesToPlace(placedModules);
+						System.out.println("------------------------------------------");
+						System.out.println("Modules to place: " + modulesToPlace);
+						System.out.println("Placed modules: " + placedModules);
+						System.out.println("------------------------------------------");
 						getCurrentModuleLoadMap().get(device.getId()).put(moduleName, totalCpuLoad);
 						
 						int max = 1;
@@ -253,8 +278,16 @@ public class ModulePlacementEdgewards extends ModulePlacement{
 			
 			
 				modulesToPlace.remove(moduleName);
+				System.out.println("------------------------------------------");
+				System.out.println("Modules to place: " + modulesToPlace);
+				System.out.println("Placed modules: " + placedModules);
+				System.out.println("------------------------------------------\n");
+//				System.out.println("Iteration for device: " + device.getName() + " module: " + moduleName + " completed.");
+				System.out.println("-----------------------------------");
 			}
-			
+
+			System.out.println("Traversed all possible modules to place for the device: " + device.getName());
+			System.out.println("-------------------------------------------------\n ");
 		}
 		
 	}
