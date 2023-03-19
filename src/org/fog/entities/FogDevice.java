@@ -120,7 +120,7 @@ public class FogDevice extends PowerDatacenter {
         }
         // stores id of this class
         getCharacteristics().setId(super.getId());
-
+        childrenIds = new ArrayList<>();
         applicationMap = new HashMap<String, Application>();
         appToModulesMap = new HashMap<String, List<String>>();
         northTupleQueue = new LinkedList<Tuple>();
@@ -213,6 +213,7 @@ public class FogDevice extends PowerDatacenter {
         appToModulesMap = new HashMap<String, List<String>>();
         northTupleQueue = new LinkedList<Tuple>();
         southTupleQueue = new LinkedList<Pair<Tuple, Integer>>();
+        childrenIds = new ArrayList<>();
         setNorthLinkBusy(false);
         setSouthLinkBusy(false);
 

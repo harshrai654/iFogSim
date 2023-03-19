@@ -70,7 +70,6 @@ public class MyModulePlacement extends ModulePlacement {
         }
 
         List<List<Integer>> leafToRootPaths = getLeafToRootPaths();
-//        System.out.println(leafToRootPaths);
         for (List<Integer> path : leafToRootPaths) {
             placeModulesInPath(path);
         }

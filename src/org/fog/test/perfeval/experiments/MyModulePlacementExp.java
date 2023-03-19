@@ -34,7 +34,7 @@ public class MyModulePlacementExp {
     static List<Actuator> actuators = new ArrayList<Actuator>();
 
     static double SENSOR_TRANSMISSION_TIME = 10;
-    static int numOfAreas = 1;
+    static int numOfAreas = 2;
     static int numOfEdgeServersPerArea = 4;
 
     static int numOfEndDevicesPerFog = 2;
@@ -77,7 +77,7 @@ public class MyModulePlacementExp {
             Controller controller = new Controller("master-controller", fogDevices, sensors,
                     actuators);
 
-            controller.submitApplication(app, 0, new MyModulePlacement(fogDevices, sensors, actuators, app, moduleMapping));
+            controller.submitApplication(app, 0, new ModulePlacementEdgewards(fogDevices, sensors, actuators, app, moduleMapping));
 
             TimeKeeper.getInstance().setSimulationStartTime(Calendar.getInstance().getTimeInMillis());
 
@@ -110,7 +110,7 @@ public class MyModulePlacementExp {
     }
 
     private static FogDevice addGw(String id, int userId, String appId, int parentId) {
-        FogDevice area = createFogDevice("d-" + id, 10000, 8192, 10000, 10000, 1, 0.0, 107.339, 83.4333);
+        FogDevice area = createFogDevice("d-" + id, 5000, 8192, 10000, 10000, 1, 0.0, 107.339, 83.4333);
         fogDevices.add(area);
         area.setParentId(parentId);
         area.setUplinkLatency(200); // latency of connection between gateways and cloud
@@ -125,8 +125,8 @@ public class MyModulePlacementExp {
 
     private static FogDevice addEdgeServer(String id, int userId, String appId, int parentId) {
         Random random = new Random();
-        int CPU_MIN = 6000;
-        int CPU_MAX = 8000;
+        int CPU_MIN = 4000;
+        int CPU_MAX = 6000;
         int RAM_MIN = 3000;
         int RAM_MAX = 8000;
         double IDLE_POWER_MIN = 112.34;
@@ -137,11 +137,11 @@ public class MyModulePlacementExp {
         double randomDouble = new Random().nextDouble();
         double idlePower = IDLE_POWER_MIN + ((IDLE_POWER_MAX - IDLE_POWER_MIN) * randomDouble);
 
-        FogDevice edgeServer = createFogDevice("f-" + id, mips, ram, 10000, 10000, 3, 0, 83.43, idlePower);
+        FogDevice edgeServer = createFogDevice("f-" + id, mips, ram, 10000, 10000, 1, 0, 83.43, idlePower);
         edgeServer.setParentId(parentId);
 
         for (int i = 0; i < numOfEndDevicesPerFog; i++) {
-            FogDevice terminal = addTerminal("t-" + id, userId, edgeServer.getId());
+            FogDevice terminal = addTerminal("t-" + id + "-" + i, userId, edgeServer.getId());
             terminal.setUplinkLatency(5);
             fogDevices.add(terminal);
         }
@@ -150,7 +150,7 @@ public class MyModulePlacementExp {
     }
 
     private static FogDevice addTerminal(String name, int userId, int parentId) {
-        FogDevice mobile = createFogDevice(name, 4000, 2048, 100, 250, 4, 0.0, 60.43, 87.43);
+        FogDevice mobile = createFogDevice(name, 800, 2048, 100, 250, 2, 0.0, 60.43, 87.43);
         mobile.setParentId(parentId);
 
         Application application = applications.get(0);
@@ -246,20 +246,27 @@ public class MyModulePlacementExp {
     @SuppressWarnings({"serial"})
     private static Application createApplication(String appId, int userId) {
         Application application = Application.createApplication(appId, userId);
-        application.addAppModule("module_1", 1024, 500, 250);
-        application.addAppModule("module_2", 4096, 1000, 500);
-        application.addAppModule("module_3", 2048, 2000, 1000);
-        application.addAppModule("module_4", 1024, 1500, 300);
-        application.addAppModule("module_5", 6144, 3000, 2000);
-        application.addAppModule("module_6", 8192, 1500, 5000);
+//        application.addAppModule("module_1", 1024, 500, 25);
+//        application.addAppModule("module_2", 4096, 1000, 50);
+//        application.addAppModule("module_3", 2048, 2000, 100);
+//        application.addAppModule("module_4", 1024, 1500, 30);
+//        application.addAppModule("module_5", 6144, 3000, 200);
+//        application.addAppModule("module_6", 8192, 1500, 500);
+//
+        application.addAppModule("module_1", 10);
+        application.addAppModule("module_2", 10);
+        application.addAppModule("module_3", 10);
+        application.addAppModule("module_4", 10);
+        application.addAppModule("module_5", 10);
+        application.addAppModule("module_6", 10);
 
         application.addAppEdge("IoT_Sensor", "module_1", 3000, 500,
                 "IoT_Sensor", Tuple.UP, AppEdge.SENSOR);
 
-        application.addAppEdge("module_1", "ACTUATOR", 2000, 500,
+        application.addAppEdge("module_1", "DISPLAY", 2000, 500,
                 "ACTUATOR_A", Tuple.DOWN, AppEdge.ACTUATOR);
 
-        application.addAppEdge("module_1", "ACTUATOR", 2000, 500,
+        application.addAppEdge("module_1", "DISPLAY", 2000, 500,
                 "ACTUATOR_B", Tuple.DOWN, AppEdge.ACTUATOR);
 
         application.addAppEdge("module_1", "module_2", 6000, 500,
@@ -306,12 +313,14 @@ public class MyModulePlacementExp {
                 new FractionalSelectivity(1.0));
         application.addTupleMapping("module_3", "TT_7", "TT_8",
                 new FractionalSelectivity(1.0));
-        application.addTupleMapping("module_4", "TT_3", "TT_4",
+        application.addTupleMapping("module_4", "TT_4", "TT_5",
                 new FractionalSelectivity(1.0));
         application.addTupleMapping("module_4", "TT_6", "TT_7",
                 new FractionalSelectivity(1.0));
+        application.addTupleMapping("module_5", "TT_5", "TT_10",
+                new FractionalSelectivity(0.1));
         application.addTupleMapping("module_5", "TT_5", "TT_6",
-                new FractionalSelectivity(1.0));
+                new FractionalSelectivity(0.9));
         application.addTupleMapping("module_6", "TT_10", "TT_11",
                 new FractionalSelectivity(1.0));
 
@@ -326,18 +335,18 @@ public class MyModulePlacementExp {
             add("module_3");
             add("module_2");
             add("module_1");
-            add("Display");
+            add("DISPLAY");
         }});
 
         final AppLoop loop2 = new AppLoop(new ArrayList<String>() {{
             add("module_5");
             add("module_6");
             add("module_1");
-            add("Display");
+            add("DISPLAY");
         }});
         List<AppLoop> loops = new ArrayList<AppLoop>() {{
             add(loop1);
-            add(loop2);
+//            add(loop2);
         }};
         application.setLoops(loops);
         return application;
